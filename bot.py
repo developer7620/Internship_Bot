@@ -20,7 +20,7 @@ from telegram.constants import ParseMode
 from config import TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, CHECK_INTERVAL, MIN_STIPEND
 from scrapers import scrape_all, filter_eligible
 from stipend_parser import stipend_passes_filter, format_stipend, parse_stipend
-
+from auto_apply import apply_to_job
 
 # ─────────────────────────────────────────────
 # LOGGING
@@ -102,16 +102,26 @@ async def send_job_alert(bot: Bot, job: dict, auto_applied: bool = False):
         f"🌐 *Source:* {escape_md(job['source'])}\n"
     )
 
-    keyboard = InlineKeyboardMarkup([[
-        InlineKeyboardButton("🔗 View Job", url=job["link"]),
-        InlineKeyboardButton("📝 Apply Now", url=job.get("apply_url", job["link"])),
-    ]])
+    # Ensure URLs are valid before adding buttons
+    view_url  = job.get("link", "").strip()
+    apply_url = job.get("apply_url", view_url).strip() or view_url
+    if not view_url.startswith("http"):
+        view_url = apply_url
+    if not apply_url.startswith("http"):
+        apply_url = view_url
+
+    buttons = []
+    if view_url.startswith("http"):
+        buttons.append(InlineKeyboardButton("🔗 View Job", url=view_url))
+    if apply_url.startswith("http") and apply_url != view_url:
+        buttons.append(InlineKeyboardButton("📝 Apply Now", url=apply_url))
+    keyboard = InlineKeyboardMarkup([buttons]) if buttons else None
 
     await bot.send_message(
         chat_id=TELEGRAM_CHAT_ID,
         text=msg,
         parse_mode=ParseMode.MARKDOWN_V2,
-        reply_markup=keyboard,
+        reply_markup=keyboard if keyboard else None,
         disable_web_page_preview=True,
     )
 
@@ -187,7 +197,7 @@ async def run_cycle(bot: Bot, seen: set) -> tuple[int, int, int, int]:
         # Auto-apply
         auto_applied = False
         try:
-            result = "skipped"
+            result = await apply_to_job(job)
             if result == "applied":
                 auto_applied = True
                 applied_count += 1
