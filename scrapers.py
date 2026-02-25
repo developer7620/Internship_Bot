@@ -24,37 +24,74 @@ HEADERS = {
 
 def is_eligible(title: str, location: str = "", description: str = "") -> bool:
     """
-    Check if job is eligible based on:
-    1. Location — must be India/Remote
-    2. Experience — must be student/intern friendly
+    Strict eligibility check:
+    1. Location must be India / Remote / WFH (hybrid is BLOCKED)
+    2. Must be intern/fresher/entry-level role
+    3. Must not require experience
     """
     combined = (title + " " + location + " " + description).lower()
-    title_lower = title.lower()
+    title_lower  = title.lower()
+    loc_lower    = location.lower().strip()
 
-    # ── Location check ──────────────────────────
-    # If location is provided and clearly not India/Remote → skip
-    if location and location.strip() and location.lower() not in ["check listing", "not mentioned", ""]:
-        loc_lower = location.lower()
+    # ── Location check ──────────────────────────────────────────
+    BLOCKED_LOCATIONS = [
+        "usa", "united states", "us only", "uk", "united kingdom",
+        "canada", "australia", "singapore", "germany", "france",
+        "europe", "emea", "latam", "us-based", "uk-based",
+        "san francisco", "new york", "london", "toronto",
+        "hybrid",  # blocked — requires physical presence
+    ]
+
+    # If location clearly says a blocked region → skip
+    if loc_lower and loc_lower not in ["check listing", "not mentioned", ""]:
+        for blocked in BLOCKED_LOCATIONS:
+            if blocked in loc_lower:
+                return False
+        # If no allowed location keyword found either → skip
         location_ok = any(allowed in loc_lower for allowed in ALLOWED_LOCATIONS)
         if not location_ok:
             return False
 
-    # ── Experience check ────────────────────────
-    # Block senior/experienced roles
-    for blocker in EXPERIENCE_BLOCKLIST:
-        if blocker in combined:
+    # ── Experience blocklist — check title + description ────────
+    STRONG_BLOCKERS = [
+        r"[2-9]\+\s*years?",          # 2+ years, 3+ years etc
+        r"[2-9]\s*-\s*\d+\s*years?", # 2-4 years experience
+        r"minimum [2-9] years?",
+        r"at least [2-9] years?",
+        r"senior",
+        r"lead\s+(engineer|developer|backend)",
+        r"staff\s+engineer",
+        r"principal\s+engineer",
+        r"director",
+        r"manager",
+        r"vp",
+        r"full.?time only",
+        r"no freshers?",
+        r"no students?",
+    ]
+    for pattern in STRONG_BLOCKERS:
+        if re.search(pattern, combined):
             return False
 
-    # If title explicitly says intern/internship → always eligible
-    if any(w in title_lower for w in ["intern", "internship", "trainee"]):
+    # ── Must be intern/fresher friendly ─────────────────────────
+    # Title says intern → always pass
+    if re.search(r"(intern(ship)?|trainee|apprentice)", title_lower):
         return True
 
-    # Otherwise check allowlist in full text
-    if any(w in combined for w in EXPERIENCE_ALLOWLIST):
-        return True
+    # Description or title has fresher/entry-level signals → pass
+    FRESHER_SIGNALS = [
+        r"fresher", r"entry.?level", r"0.?1 year",
+        r"no experience required", r"undergraduate",
+        r"student", r"new grad", r"recent graduate",
+        r"batch (of )?20(25|26|27)", r"class of 20(25|26|27)",
+    ]
+    for pattern in FRESHER_SIGNALS:
+        if re.search(pattern, combined):
+            return True
 
-    # If we can't determine → include it (don't miss opportunities)
-    return True
+    # If title has none of the above signals → block it
+    # (too risky to include unknown experience-level jobs)
+    return False
 
 
 def matches_keywords(title: str) -> bool:
