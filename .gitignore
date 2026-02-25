@@ -1,0 +1,8 @@
+.env
+venv/
+__pycache__/
+*.pyc
+seen_jobs_v2.json
+applied_jobs.txt
+bot_v2.log
+resume.pdf
