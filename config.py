@@ -1,7 +1,8 @@
 """
 ⚙️ INTERNSHIP BOT V2 — CONFIGURATION
-Edit this file with your details before running.
+Filled as per resume.
 """
+
 # ─────────────────────────────────────────────
 # YOUR PROFILE
 # ─────────────────────────────────────────────
@@ -11,7 +12,7 @@ PROFILE = {
     "phone":      "+91 7620862837",
     "linkedin":   "https://www.linkedin.com/in/aditya-bhimanwar-7209072a2/",
     "github":     "https://github.com/developer7620",
-    "resume_path": "resume.pdf",
+    "resume_path": "Aditya_Anil_Bhimanwar_Resume.pdf",
     
     "college":    "Indian Institute of Information Technology Kottayam",
     "degree":     "B.Tech Electronics and Communication Engineering",
@@ -26,12 +27,13 @@ PROFILE = {
     ),
     
     "about": (
-        "3rd year B.Tech student at IIIT Kottayam (CGPA 8.65) with hands-on backend experience. "
-        "Worked as a Software Engineering Intern at Granville Tech where I owned backend API "
-        "development for a live education platform (ALETU), building production-grade APIs "
-        "including scheduling, lessons, sessions, quizzes, authentication, and admin systems "
-        "using Node.js and Prisma. Strong foundation in DSA (200+ problems solved) and "
-        "experienced in full-stack development with MERN."
+        "3rd year B.Tech ECE student at IIIT Kottayam (CGPA 8.65) "
+        "with hands-on backend experience. Worked as a Software Engineering "
+        "Intern at Granville Tech where I owned backend API development for "
+        "a live education platform (ALETU), building production-grade APIs "
+        "including scheduling, lessons, sessions, authentication, role-based "
+        "access control, and admin systems using Node.js and Prisma. "
+        "Solved 200+ DSA problems and built full-stack MERN applications."
     ),
 }
 
@@ -44,27 +46,49 @@ load_dotenv()
 
 TELEGRAM_TOKEN   = os.getenv("TELEGRAM_TOKEN", "YOUR_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_CHAT_ID")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")  # For AI cover letters (optional)
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 
 # ─────────────────────────────────────────────
 # FILTERS
 # ─────────────────────────────────────────────
-MIN_STIPEND = 40000   # Minimum monthly stipend in INR (0 = no filter)
-CHECK_INTERVAL = 1800 # Seconds between scrape cycles (1800 = 30 min)
+MIN_STIPEND = 40000
+CHECK_INTERVAL = 1800
 
 KEYWORDS = [
     "backend", "backend developer", "backend engineer",
     "software engineer intern", "sde intern", "software developer intern",
-    "full stack intern", "node.js intern", "python intern",
-    "java intern", "golang intern", "django intern", "flask intern",
-    "fastapi intern", "devops intern", "platform engineer intern",
-    "api developer intern", "cloud intern",
+    "full stack intern", "node.js intern",
+    "api developer intern", "platform engineer intern",
+    "express intern", "mongodb intern",
 ]
 
 EXCLUDE_KEYWORDS = [
     "frontend only", "react only", "ui/ux", "graphic design",
     "content writer", "marketing", "hr intern", "sales intern",
     "unpaid", "no stipend",
+]
+
+# ─────────────────────────────────────────────
+# ELIGIBILITY FILTERS
+# ─────────────────────────────────────────────
+ALLOWED_LOCATIONS = [
+    "india", "remote", "work from home", "wfh", "anywhere",
+    "worldwide", "bengaluru", "bangalore", "mumbai", "delhi",
+    "hyderabad", "pune", "chennai", "noida", "gurugram",
+    "gurgaon", "kolkata", "ahmedabad", "kochi", "hybrid",
+]
+
+EXPERIENCE_BLOCKLIST = [
+    "3+ years", "4+ years", "5+ years", "senior", "lead engineer",
+    "manager", "director", "principal", "full time only", "no freshers",
+    "minimum 2 years", "2+ years experience",
+]
+
+EXPERIENCE_ALLOWLIST = [
+    "intern", "internship", "fresher", "0-1 year", "entry level",
+    "entry-level", "trainee", "student", "undergraduate",
+    "new grad", "recent graduate", "no experience required",
+    "2025", "2026", "2027",
 ]
 
 # ─────────────────────────────────────────────

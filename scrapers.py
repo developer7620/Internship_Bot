@@ -8,7 +8,7 @@ import logging
 import re
 import httpx
 from bs4 import BeautifulSoup
-from config import KEYWORDS, EXCLUDE_KEYWORDS, CAREER_PAGES
+from config import KEYWORDS, EXCLUDE_KEYWORDS, CAREER_PAGES, ALLOWED_LOCATIONS, EXPERIENCE_BLOCKLIST, EXPERIENCE_ALLOWLIST
 
 log = logging.getLogger("Scrapers")
 
@@ -20,6 +20,41 @@ HEADERS = {
     ),
     "Accept-Language": "en-US,en;q=0.9",
 }
+
+
+def is_eligible(title: str, location: str = "", description: str = "") -> bool:
+    """
+    Check if job is eligible based on:
+    1. Location — must be India/Remote
+    2. Experience — must be student/intern friendly
+    """
+    combined = (title + " " + location + " " + description).lower()
+    title_lower = title.lower()
+
+    # ── Location check ──────────────────────────
+    # If location is provided and clearly not India/Remote → skip
+    if location and location.strip() and location.lower() not in ["check listing", "not mentioned", ""]:
+        loc_lower = location.lower()
+        location_ok = any(allowed in loc_lower for allowed in ALLOWED_LOCATIONS)
+        if not location_ok:
+            return False
+
+    # ── Experience check ────────────────────────
+    # Block senior/experienced roles
+    for blocker in EXPERIENCE_BLOCKLIST:
+        if blocker in combined:
+            return False
+
+    # If title explicitly says intern/internship → always eligible
+    if any(w in title_lower for w in ["intern", "internship", "trainee"]):
+        return True
+
+    # Otherwise check allowlist in full text
+    if any(w in combined for w in EXPERIENCE_ALLOWLIST):
+        return True
+
+    # If we can't determine → include it (don't miss opportunities)
+    return True
 
 
 def matches_keywords(title: str) -> bool:
@@ -336,3 +371,17 @@ async def scrape_all(client: httpx.AsyncClient) -> list[dict]:
             jobs.extend(r)
 
     return jobs
+
+
+def filter_eligible(jobs: list[dict]) -> list[dict]:
+    """Filter jobs by location and experience eligibility."""
+    eligible = []
+    for job in jobs:
+        location    = job.get("location", "")
+        title       = job.get("title", "")
+        description = job.get("description", "")
+        if is_eligible(title, location, description):
+            eligible.append(job)
+        else:
+            log.debug(f"Filtered out (not eligible): {job['company']} — {title} @ {location}")
+    return eligible

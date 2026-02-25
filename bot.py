@@ -18,7 +18,7 @@ from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 
 from config import TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, CHECK_INTERVAL, MIN_STIPEND
-from scrapers import scrape_all
+from scrapers import scrape_all, filter_eligible
 from stipend_parser import stipend_passes_filter, format_stipend, parse_stipend
 from auto_apply import apply_to_job
 
@@ -161,8 +161,10 @@ async def run_cycle(bot: Bot, seen: set) -> tuple[int, int, int, int]:
     async with httpx.AsyncClient(follow_redirects=True) as client:
         all_jobs = await scrape_all(client)
 
+    # Filter by location + experience eligibility
+    all_jobs = filter_eligible(all_jobs)
     total_scanned = len(all_jobs)
-    log.info(f"Scraped {total_scanned} matching jobs before stipend filter")
+    log.info(f"After eligibility filter: {total_scanned} jobs remain")
 
     # Apply stipend filter
     filtered_jobs = [
