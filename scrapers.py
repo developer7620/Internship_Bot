@@ -8,7 +8,8 @@ import logging
 import re
 import httpx
 from bs4 import BeautifulSoup
-from config import KEYWORDS, EXCLUDE_KEYWORDS, CAREER_PAGES, ALLOWED_LOCATIONS, EXPERIENCE_BLOCKLIST, EXPERIENCE_ALLOWLIST
+from config import KEYWORDS, EXCLUDE_KEYWORDS, CAREER_PAGES
+from eligibility import is_valid_internship, filter_eligible
 
 log = logging.getLogger("Scrapers")
 
@@ -20,78 +21,6 @@ HEADERS = {
     ),
     "Accept-Language": "en-US,en;q=0.9",
 }
-
-
-def is_eligible(title: str, location: str = "", description: str = "") -> bool:
-    """
-    Strict eligibility check:
-    1. Location must be India / Remote / WFH (hybrid is BLOCKED)
-    2. Must be intern/fresher/entry-level role
-    3. Must not require experience
-    """
-    combined = (title + " " + location + " " + description).lower()
-    title_lower  = title.lower()
-    loc_lower    = location.lower().strip()
-
-    # ── Location check ──────────────────────────────────────────
-    BLOCKED_LOCATIONS = [
-        "usa", "united states", "us only", "uk", "united kingdom",
-        "canada", "australia", "singapore", "germany", "france",
-        "europe", "emea", "latam", "us-based", "uk-based",
-        "san francisco", "new york", "london", "toronto",
-        "hybrid",  # blocked — requires physical presence
-    ]
-
-    # If location clearly says a blocked region → skip
-    if loc_lower and loc_lower not in ["check listing", "not mentioned", ""]:
-        for blocked in BLOCKED_LOCATIONS:
-            if blocked in loc_lower:
-                return False
-        # If no allowed location keyword found either → skip
-        location_ok = any(allowed in loc_lower for allowed in ALLOWED_LOCATIONS)
-        if not location_ok:
-            return False
-
-    # ── Experience blocklist — check title + description ────────
-    STRONG_BLOCKERS = [
-        r"[2-9]\+\s*years?",          # 2+ years, 3+ years etc
-        r"[2-9]\s*-\s*\d+\s*years?", # 2-4 years experience
-        r"minimum [2-9] years?",
-        r"at least [2-9] years?",
-        r"senior",
-        r"lead\s+(engineer|developer|backend)",
-        r"staff\s+engineer",
-        r"principal\s+engineer",
-        r"director",
-        r"manager",
-        r"vp",
-        r"full.?time only",
-        r"no freshers?",
-        r"no students?",
-    ]
-    for pattern in STRONG_BLOCKERS:
-        if re.search(pattern, combined):
-            return False
-
-    # ── Must be intern/fresher friendly ─────────────────────────
-    # Title says intern → always pass
-    if re.search(r"(intern(ship)?|trainee|apprentice)", title_lower):
-        return True
-
-    # Description or title has fresher/entry-level signals → pass
-    FRESHER_SIGNALS = [
-        r"fresher", r"entry.?level", r"0.?1 year",
-        r"no experience required", r"undergraduate",
-        r"student", r"new grad", r"recent graduate",
-        r"batch (of )?20(25|26|27)", r"class of 20(25|26|27)",
-    ]
-    for pattern in FRESHER_SIGNALS:
-        if re.search(pattern, combined):
-            return True
-
-    # If no fresher signal found but also no blocker → include it
-    # Better to see a few extra jobs than miss real opportunities
-    return True
 
 
 def matches_keywords(title: str) -> bool:
@@ -408,17 +337,3 @@ async def scrape_all(client: httpx.AsyncClient) -> list[dict]:
             jobs.extend(r)
 
     return jobs
-
-
-def filter_eligible(jobs: list[dict]) -> list[dict]:
-    """Filter jobs by location and experience eligibility."""
-    eligible = []
-    for job in jobs:
-        location    = job.get("location", "")
-        title       = job.get("title", "")
-        description = job.get("description", "")
-        if is_eligible(title, location, description):
-            eligible.append(job)
-        else:
-            log.debug(f"Filtered out (not eligible): {job['company']} — {title} @ {location}")
-    return eligible

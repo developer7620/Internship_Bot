@@ -18,7 +18,8 @@ from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 
 from config import TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, CHECK_INTERVAL, MIN_STIPEND
-from scrapers import scrape_all, filter_eligible
+from scrapers import scrape_all
+from eligibility import filter_eligible
 from stipend_parser import stipend_passes_filter, format_stipend, parse_stipend
 
 # ─────────────────────────────────────────────
