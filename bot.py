@@ -20,7 +20,6 @@ from telegram.constants import ParseMode
 from config import TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, CHECK_INTERVAL, MIN_STIPEND
 from scrapers import scrape_all, filter_eligible
 from stipend_parser import stipend_passes_filter, format_stipend, parse_stipend
-from auto_apply import apply_to_job
 
 # ─────────────────────────────────────────────
 # LOGGING
@@ -194,16 +193,7 @@ async def run_cycle(bot: Bot, seen: set) -> tuple[int, int, int, int]:
         if jid in seen:
             continue
 
-        # Auto-apply
         auto_applied = False
-        try:
-            result = await apply_to_job(job)
-            if result == "applied":
-                auto_applied = True
-                applied_count += 1
-                log.info(f"🤖 Auto-applied: {job['company']} — {job['title']}")
-        except Exception as e:
-            log.warning(f"Auto-apply failed for {job['company']}: {e}")
 
         # Send Telegram alert
         try:
