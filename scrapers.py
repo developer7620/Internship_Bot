@@ -89,9 +89,9 @@ def is_eligible(title: str, location: str = "", description: str = "") -> bool:
         if re.search(pattern, combined):
             return True
 
-    # If title has none of the above signals → block it
-    # (too risky to include unknown experience-level jobs)
-    return False
+    # If no fresher signal found but also no blocker → include it
+    # Better to see a few extra jobs than miss real opportunities
+    return True
 
 
 def matches_keywords(title: str) -> bool:
