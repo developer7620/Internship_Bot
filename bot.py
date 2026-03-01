@@ -41,7 +41,14 @@ log = logging.getLogger("BotV2")
 SEEN_DB = Path("seen_jobs_v2.json")
 
 def load_seen() -> set:
+    """Load seen jobs. Auto-reset every 7 days so recurring listings re-appear."""
+    import time
     if SEEN_DB.exists():
+        age_days = (time.time() - SEEN_DB.stat().st_mtime) / 86400
+        if age_days > 7:
+            SEEN_DB.unlink()
+            log.info("♻️ Auto-reset seen_jobs (7-day rotation)")
+            return set()
         with open(SEEN_DB) as f:
             return set(json.load(f))
     return set()
@@ -159,6 +166,8 @@ async def send_startup_message(bot: Bot):
         text=msg,
         parse_mode=ParseMode.MARKDOWN_V2,
     )
+
+
 
 
 # ─────────────────────────────────────────────

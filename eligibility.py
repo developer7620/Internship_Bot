@@ -202,7 +202,7 @@ def check_technical_role(title: str, combined: str) -> tuple[bool, str]:
     return True, ""
 
 
-def check_internship(title: str, combined: str) -> tuple[bool, str]:
+def check_internship(title: str, combined: str, source: str = "") -> tuple[bool, str]:
     if RE_HARD_REJECT.search(combined):
         return False, "hard reject signal (new grad / graduate program / no freshers)"
     if RE_INTERN_NEGATION.search(combined):
@@ -212,6 +212,10 @@ def check_internship(title: str, combined: str) -> tuple[bool, str]:
         return True, ""
     # Check full combined text
     if RE_INTERNSHIP.search(combined):
+        return True, ""
+    # Sources that are internship-only platforms — trust them
+    INTERNSHIP_SOURCES = {"internshala", "unstop", "letsintern", "internshala.com"}
+    if any(s in source.lower() for s in INTERNSHIP_SOURCES):
         return True, ""
     return False, "no internship signal in title or description"
 
@@ -268,9 +272,10 @@ def is_valid_internship(job: dict) -> bool:
     title    = _get_title(job)
     location = _get_location(job)
 
+    source = job.get("source", "")
     checks = [
         check_technical_role(title, combined),
-        check_internship(title, combined),
+        check_internship(title, combined, source),
         check_location(location, combined),
         check_experience(combined),
         check_seniority(combined),

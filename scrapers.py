@@ -69,7 +69,7 @@ async def scrape_internshala(client: httpx.AsyncClient) -> list[dict]:
                     if matches_keywords(title):
                         jobs.append({"title": title, "company": company, "link": link,
                                      "apply_url": link, "stipend": stipend, "location": location,
-                                     "source": "Internshala"})
+                                     "source": "Internshala", "description": "internship"})
                 except Exception:
                     continue
         except Exception as e:
@@ -109,7 +109,8 @@ async def scrape_linkedin(client: httpx.AsyncClient) -> list[dict]:
                     if matches_keywords(title):
                         jobs.append({"title": title, "company": company, "link": link,
                                      "apply_url": link, "stipend": "Check listing",
-                                     "location": location, "source": "LinkedIn"})
+                                     "location": location, "source": "LinkedIn",
+                                     "description": "internship"})
                 except Exception:
                     continue
         except Exception as e:
@@ -141,7 +142,8 @@ async def scrape_naukri(client: httpx.AsyncClient) -> list[dict]:
                     if matches_keywords(title):
                         jobs.append({"title": title, "company": company, "link": link,
                                      "apply_url": link, "stipend": stipend,
-                                     "location": location, "source": "Naukri"})
+                                     "location": location, "source": "Naukri",
+                                     "description": "internship opportunity"})
                 except Exception:
                     continue
         except Exception as e:
